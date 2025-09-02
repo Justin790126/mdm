@@ -2,6 +2,7 @@
 #include <QDirIterator>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include "md2html.h"
 
 using namespace std;
@@ -13,9 +14,13 @@ class MdFile
         ~MdFile() = default;
 
         string getFullPath() const { return m_sFullPath; }
+        void setHtmlContent(const string& html) { m_sHtmlContent = html; }
+        string getHtmlContent() const { return m_sHtmlContent; }
 
     private:
         string m_sFullPath;
+
+        string m_sHtmlContent;
 };
 
 class ModelMdConverter : public QThread
@@ -36,4 +41,11 @@ private:
     string m_sOutputRoot;
 
     vector<MdFile*> m_vMdFiles;
+
+private:
+    vector<string> ParseDstFolders();
+
+    void CreateDstFolders(const vector<string> &dstFolders);
+
+    string ParseMdRawFile(const string &filePath, const string& rootFolder);
 };

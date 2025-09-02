@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
 
     ModelMdConverter* md = new ModelMdConverter();
     md->setInputRoot("/home/justin126/workspace/mdm/doc");
+    md->setOutputRoot("/home/justin126/workspace/mdm/html");
     md->start();
 
     return a.exec();
