@@ -13,7 +13,31 @@ ModelMdConverter::ModelMdConverter(QObject *parent)
     // process_string
 }
 
+ModelMdConverter::~ModelMdConverter()
+{
+    for (MdFile* file : m_vMdFiles)
+        delete file;
+}
+
+void ModelMdConverter::collectMarkdownFiles()
+{
+    m_vMdFiles.clear();
+    QDirIterator it(QString::fromStdString(m_sInputRoot),
+                    QStringList() << "*.md",
+                    QDir::Files,
+                    QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        QString filePath = it.next();
+        m_vMdFiles.push_back(new MdFile(filePath.toStdString()));
+    }
+}
+
+
 void ModelMdConverter::run()
 {
     // Implement your threaded task here
+    collectMarkdownFiles();
+    for (size_t i = 0 ; i < m_vMdFiles.size(); i++) {
+        cout << "Processing file: " << m_vMdFiles[i]->getFullPath() << endl;
+    }
 }

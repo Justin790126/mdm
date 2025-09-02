@@ -14,9 +14,11 @@ set(MD4C_HTML md2html.cpp cmdline.cpp md4c-html.cpp entity.cpp )
 
 set(SOURCES
     main.cpp
+    ModelMdConverter.cpp
 )
 
 set(HEADERS
+    ModelMdConverter.h
 )
 
 qt4_wrap_cpp(SOURCES ${HEADERS})
