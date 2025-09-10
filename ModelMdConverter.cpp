@@ -45,20 +45,27 @@ ModelMdConverter::~ModelMdConverter() {
 
 void ModelMdConverter::collectMarkdownFiles() {
   m_vMdFiles.clear();
+  m_vMdFiles.reserve(128);
   QDirIterator it(QString::fromStdString(m_sInputRoot), QStringList() << "*.md",
                   QDir::Files, QDirIterator::Subdirectories);
   while (it.hasNext()) {
     QString filePath = it.next();
     m_vMdFiles.push_back(new MdFile(filePath.toStdString()));
   }
+  m_vMdFiles.shrink_to_fit();
 }
 
 vector<string> ModelMdConverter::ParseDstFolders() {
   vector<string> dstFolders;
   dstFolders.reserve(m_vMdFiles.size());
   for (size_t i = 0; i < m_vMdFiles.size(); i++) {
-    string inputFullpath = m_vMdFiles[i]->getFullPath();
-    // cout << "Processing file: " << m_vMdFiles[i]->getFullPath() << endl;
+    string inputFullpath = m_vMdFiles[i]->getMdPath();
+
+    string baseNameWithoutExtension = QFileInfo(QString::fromStdString(inputFullpath))
+                                          .completeBaseName()
+                                          .toStdString();
+    string htmlBaseName = baseNameWithoutExtension + ".html";
+
     size_t pos = inputFullpath.find(m_sInputRoot);
     if (pos != std::string::npos) {
       inputFullpath.replace(pos, m_sInputRoot.length(), m_sOutputRoot);
@@ -67,9 +74,11 @@ vector<string> ModelMdConverter::ParseDstFolders() {
       if (lastSlash != std::string::npos) {
         std::string folderPath = inputFullpath.substr(0, lastSlash);
         // Use folderPath as needed
-        std::cout << folderPath << std::endl;
 
         dstFolders.push_back(folderPath);
+
+        string htmlPath = folderPath + "/" + htmlBaseName;
+        m_vMdFiles[i]->setHtmlPath(htmlPath);
       }
     }
   }
@@ -91,7 +100,26 @@ void ModelMdConverter::CreateDstFolders(const vector<string> &dstFolders) {
 
 string ModelMdConverter::ParseMdRawFile(const string &filePath, const string& rootFolder)
 {
+    ifstream inFile(filePath);
+    if (!inFile) {
+        cerr << "Unable to open file " << filePath << endl;
+        return "";
+    }
 
+    string rawContent((istreambuf_iterator<char>(inFile)), istreambuf_iterator<char>());
+    inFile.close();
+
+    // Convert markdown to HTML
+    char* htmlContent = process_string(rawContent.c_str());
+    if (htmlContent) {
+        // Save or use the HTML content as needed
+        string htmlStr(htmlContent);
+        free(htmlContent); // Free the allocated memory
+        return htmlStr;
+    } else {
+        cerr << "Markdown to HTML conversion failed for file " << filePath << endl;
+        return "";
+    }
 }
 
 void ModelMdConverter::run() {
@@ -100,15 +128,29 @@ void ModelMdConverter::run() {
 
   vector<string> dstFolders = ParseDstFolders();
 
+  CreateDstFolders(dstFolders);
+
   // iterate m_vMdFiles and convert to html
     for (size_t i = 0; i < m_vMdFiles.size(); i++) {
-        string inputFullpath = m_vMdFiles[i]->getFullPath();
+        string inputFullpath = m_vMdFiles[i]->getMdPath();
         
-        string rawContent;
-        
-        
-        
+        string rawContent = ParseMdRawFile(inputFullpath, dstFolders[i]);
+
+
+        m_vMdFiles[i]->setHtmlContent(rawContent);
+
+        // Write HTML content to file
+        cout << m_vMdFiles[i]->getHtmlPath() << endl;
+
+        FILE *outFile = fopen(m_vMdFiles[i]->getHtmlPath().c_str(), "w");
+        if (outFile) {
+            fputs(m_vMdFiles[i]->getHtmlContent().c_str(), outFile);
+            fclose(outFile);
+        } else {
+            cerr << "Unable to open output file " << m_vMdFiles[i]->getHtmlPath() << endl;
+        }
+
     }
 
-  CreateDstFolders(dstFolders);
+  
 }

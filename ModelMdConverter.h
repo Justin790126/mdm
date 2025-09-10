@@ -10,15 +10,18 @@ using namespace std;
 class MdFile
 {
     public:
-        MdFile(const string& path) : m_sFullPath(path) {}
+        MdFile(const string& path) : m_sMdPath(path) {}
         ~MdFile() = default;
 
-        string getFullPath() const { return m_sFullPath; }
-        void setHtmlContent(const string& html) { m_sHtmlContent = html; }
+        string getMdPath() const { return m_sMdPath; }
+        void setHtmlContent(const string& html) { m_sHtmlContent = std::move(html); }
         string getHtmlContent() const { return m_sHtmlContent; }
+        void setHtmlPath(const string& path) { m_sHtmlPath = path; }
+        string getHtmlPath() const { return m_sHtmlPath; }
 
     private:
-        string m_sFullPath;
+        string m_sMdPath;
+        string m_sHtmlPath;
 
         string m_sHtmlContent;
 };
